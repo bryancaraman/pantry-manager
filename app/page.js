@@ -57,7 +57,7 @@ export default function Home() {
       await auth.signInWithGoogle();
       router.push('/inventory');
     } catch (err) {
-      setError(err.message); // Display error message from Firebase
+      setError(err.message);
     }
   };
 
