@@ -12,6 +12,7 @@ import {
   Link,
   Alert
 } from '@mui/material';
+import Navbar from './components/navbar'
 
 export default function Home() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -68,7 +69,8 @@ export default function Home() {
   };
 
   return (
-    <Container component="main" maxWidth="xs">
+    <Box>
+      <Navbar/>
       <Box
         sx={{
           marginTop: 8,
@@ -137,6 +139,6 @@ export default function Home() {
           </Box>
         </Box>
       </Box>
-    </Container>
+    </Box>
   );
 }

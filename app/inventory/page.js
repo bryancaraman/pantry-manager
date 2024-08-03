@@ -1,19 +1,21 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
 import { firestore, auth } from "@/firebase";
-import { Box, Typography, Modal, Stack, TextField, Button, IconButton } from '@mui/material'
+import { Box, Typography, Modal, Grid, TextField, Button, IconButton, Paper, Stack } from '@mui/material';
 import { collection, deleteDoc, getDoc, getDocs, query, setDoc, doc } from "firebase/firestore";
 import { onAuthStateChanged } from 'firebase/auth';
-import Navbar from '../components/navbar'
-import Recipes from '../components/recipe'
+import Navbar from '../components/navbar';
+import Recipes from '../components/recipe';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
 
 export default function Inventory() {
   const [inventory, setInventory] = useState([]);
   const [open, setOpen] = useState(false);
   const [itemName, setItemName] = useState('');
   const [quantity, setQuantity] = useState(1);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -37,10 +39,10 @@ export default function Inventory() {
       inventoryList.push({
         name: doc.id,
         ...doc.data(),
-      })
+      });
     });
     setInventory(inventoryList);
-  }
+  };
 
   const addItem = async (item, quantity) => {
     if (!user) return;
@@ -56,7 +58,7 @@ export default function Inventory() {
     }
 
     await updateInventory(user.uid);
-  }
+  };
 
   const removeItem = async (item) => {
     if (!user) return;
@@ -74,7 +76,7 @@ export default function Inventory() {
     }
 
     await updateInventory(user.uid);
-  }
+  };
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -86,7 +88,7 @@ export default function Inventory() {
   const handleSearch = (e) => {
     setSearch(e.target.value);
   };
-   
+
   return (
     <Box 
       width="100vw" 
@@ -96,7 +98,7 @@ export default function Inventory() {
       alignItems="center" 
       gap={2} 
     >
-      <Navbar/>
+      <Navbar />
       <Modal open={open} onClose={handleClose}>
         <Box
           position="absolute" top="50%" left="50%"
@@ -132,99 +134,87 @@ export default function Inventory() {
               setQuantity(Number(e.target.value));
             }}
           />
-          <Button variant="outlined" onClick={() => {
+          <Button 
+            variant="contained" 
+            onClick={() => {
               addItem(itemName, quantity);
               setItemName('');
               setQuantity(1);
               handleClose();
-          }}>
+            }}
+          >
             Add
           </Button>
         </Box>
       </Modal>
-      <Box border="1px solid #333" height="750px">
+      <Paper 
+        sx={{ 
+          width: '80%', 
+          padding: 2, 
+          marginBottom: 2, 
+          textAlign: 'center' 
+        }}
+        elevation={3}
+      >
+        <Typography variant="h3" sx={{ fontFamily: '"Josefin", cursive' }}>
+          Your Pantry
+        </Typography>
         <Box 
-          width= "800px" 
-          height="80px" 
-          bgcolor="#ADD8E6" 
           display="flex" 
+          justifyContent="space-between" 
           alignItems="center" 
-          justifyContent="center"
-          padding={2}
-          sx={{ borderBottom: 1 }}
-        >
-          <Typography variant="h3" color="#333" sx={{ fontFamily: '"Josefin", cursive' }}>
-            Your Pantry
-          </Typography>
-        </Box>
-        <Box 
-          width= "800px" 
-          height="80px" 
-          display="flex" 
-          alignItems="center" 
-          justifyContent="space-between"
-          padding={6}
+          margin={3}
         >
           <TextField
-              label="Search Inventory"
-              variant="outlined"
-              value={search}
-              onChange={handleSearch}
-              sx={{ 
-                width: 400,
-                minWidth: 400,
-              }}
+            label="Search Inventory"
+            variant="outlined"
+            value={search}
+            onChange={handleSearch}
+            sx={{ width: '70%' }}
           />
           <Button 
-            variant="outlined" 
-            size="large"
-            onClick={() => {
-              handleOpen();
-            }}
+            variant="contained" 
+            onClick={handleOpen}
           >
             Add New Item
           </Button>
         </Box>
-      <Stack width="800px" height="650px" overflow="auto">
-        {
-          filteredInventory.map(({name, quantity}) => (
-            <Box 
-              key={name} 
-              width="100%" 
-              minHeight="75px" 
-              display="flex" 
-              alignItems="center" 
-              justifyContent="space-between" 
-              px={4}
+      </Paper>
+      <Grid container spacing={3} sx={{ width: '80%', maxHeight: '650px', overflowY: 'auto' }}>
+        {filteredInventory.map(({ name, quantity }) => (
+          <Grid item xs={12} sm={6} md={4} lg={3} key={name} padding={2}>
+            <Paper 
+              elevation={3} 
+              sx={{ padding: 2, textAlign: 'center', position: 'relative' }}
             >
-              <Typography variant="h5" color="#333" textAlign="center" sx={{ fontWeight: 'bold' }}>
+              <Typography 
+                variant="h6" 
+                sx={{ fontWeight: 'bold', marginBottom: 1 }}
+              >
                 {name.charAt(0).toUpperCase() + name.slice(1)}
               </Typography>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <IconButton variant="contained" 
-                  onClick={() => {
-                    addItem(name, 1);
-                  }}
+              <Stack direction="row" spacing={1} justifyContent="center" alignItems="center">
+                <IconButton 
+                  color="primary" 
+                  onClick={() => addItem(name, 1)}
                 >
-                  +
+                  <AddIcon />
                 </IconButton>
-                <Typography variant="h5" color="#333" textAlign="center" sx={{ fontWeight: 'bold' }}>
+                <Typography variant="h6">
                   {quantity}
                 </Typography>
-                <IconButton variant="contained" 
-                  onClick={() => {
-                    removeItem(name);
-                  }}
+                <IconButton 
+                  color="secondary" 
+                  onClick={() => removeItem(name)}
                 >
-                  -
+                  <RemoveIcon />
                 </IconButton>
               </Stack>
-            </Box>
-          ))
-        }
-      </Stack>
-      </Box>
-      <Recipes/>
+            </Paper>
+          </Grid>
+        ))}
+      </Grid>
+      <Recipes />
     </Box>
   );
 }
