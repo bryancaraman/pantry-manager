@@ -55,15 +55,13 @@ export default function RecipeComponent() {
       }
 
       try {
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        const response = await fetch("/api/generateRecipe", {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${process.env.NEXT_PUBLIC_OPENROUTER_API_KEY}`,
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            "model": "qwen/qwen-2-7b-instruct:free",
-            "messages": [
+            messages: [
               { "role": "user", "content": `Create a recipe using these ingredients: ${inventory.join(', ')}. Format your recipe with a title, spacing, and numbered instructions.` },
             ],
           })
