@@ -8,6 +8,7 @@ import { collection, getDocs, setDoc, doc } from "firebase/firestore";
 export default function RecipeComponent() {
   const [recipes, setRecipes] = useState([]);
   const [generatedRecipe, setGeneratedRecipe] = useState(null);
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
 
   useEffect(() => {
     const fetchRecipes = async () => {
@@ -61,18 +62,23 @@ export default function RecipeComponent() {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            "model": "meta-llama/llama-3.1-8b-instruct:free",
+            "model": "qwen/qwen-2-7b-instruct:free",
             "messages": [
               { "role": "user", "content": `Create a recipe using these ingredients: ${inventory.join(', ')}. Format your recipe with a title, spacing, and numbered instructions.` },
             ],
           })
         });
 
+        if (response.status === 429) {
+          throw new Error('Rate limit exceeded. Please try again later.');
+        }
+
         if (!response.ok) {
           throw new Error(`API request failed with status ${response.status}`);
         }
 
         const data = await response.json();
+        console.log('API Response:', data);
 
         if (!data.choices || data.choices.length === 0) {
           throw new Error('Invalid response format: choices array is empty');
@@ -80,7 +86,6 @@ export default function RecipeComponent() {
 
         const recipeText = data.choices[0].message.content;
 
-        // Extract the title and instructions from the response
         const titleMatch = recipeText.match(/Title:\s*(.*)/i);
         const title = titleMatch ? titleMatch[1] : "Generated Recipe";
 
@@ -93,8 +98,6 @@ export default function RecipeComponent() {
           instructions: instructions,
         };
 
-        const userRecipesCollection = collection(firestore, 'users', user.uid, 'recipes');
-        await setDoc(doc(userRecipesCollection, newRecipe.title), newRecipe);
         setGeneratedRecipe(newRecipe);
 
       } catch (error) {
@@ -106,6 +109,24 @@ export default function RecipeComponent() {
         });
       }
     }
+  };
+
+  const saveRecipe = async () => {
+    const user = auth.currentUser;
+    if (user && generatedRecipe) {
+      try {
+        const userRecipesCollection = collection(firestore, 'users', user.uid, 'recipes');
+        await setDoc(doc(userRecipesCollection, generatedRecipe.title), generatedRecipe);
+        setRecipes(prevRecipes => [...prevRecipes, generatedRecipe]);
+        setGeneratedRecipe(null);
+      } catch (error) {
+        console.error('Error saving recipe:', error);
+      }
+    }
+  };
+
+  const handleRecipeClick = (recipe) => {
+    setSelectedRecipe(recipe);
   };
 
   return (
@@ -164,28 +185,40 @@ export default function RecipeComponent() {
             </CardContent>
             <CardActions>
               <Button size="small" onClick={() => setGeneratedRecipe(null)}>Back to Saved Recipes</Button>
+              <Button size="small" onClick={saveRecipe}>Save Recipe</Button>
+            </CardActions>
+          </Card>
+        ) : selectedRecipe ? (
+          <Card>
+            <CardContent>
+              <Typography variant="h5" component="div">
+                {selectedRecipe.title}
+              </Typography>
+              <Typography sx={{ mb: 1.5 }} color="text.secondary">
+                Ingredients:
+              </Typography>
+              <Typography variant="body2">
+                {selectedRecipe.ingredients.join(', ')}
+              </Typography>
+              <Typography sx={{ mt: 2 }} variant="body2">
+                Instructions:
+              </Typography>
+              <Typography variant="body2" component="div">
+                {selectedRecipe.instructions.split('\n').map((line, index) => (
+                  <div key={index}>{line}</div>
+                ))}
+              </Typography>
+            </CardContent>
+            <CardActions>
+              <Button size="small" onClick={() => setSelectedRecipe(null)}>Back to Recipe List</Button>
             </CardActions>
           </Card>
         ) : (
-          recipes.map(({ id, title, ingredients, instructions }) => (
-            <Card key={id}>
+          recipes.map((recipe) => (
+            <Card key={recipe.id} onClick={() => handleRecipeClick(recipe)}>
               <CardContent>
                 <Typography variant="h5" component="div">
-                  {title}
-                </Typography>
-                <Typography sx={{ mb: 1.5 }} color="text.secondary">
-                  Ingredients:
-                </Typography>
-                <Typography variant="body2">
-                  {ingredients.join(', ')}
-                </Typography>
-                <Typography sx={{ mt: 2 }} variant="body2">
-                  Instructions:
-                </Typography>
-                <Typography variant="body2" component="div">
-                  {instructions.split('\n').map((line, index) => (
-                    <div key={index}>{line}</div>
-                  ))}
+                  {recipe.title}
                 </Typography>
               </CardContent>
             </Card>
