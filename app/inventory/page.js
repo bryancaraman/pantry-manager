@@ -6,6 +6,7 @@ import { Box, Typography, Modal, Stack, TextField, Button, IconButton } from '@m
 import { collection, deleteDoc, getDoc, getDocs, query, setDoc, doc } from "firebase/firestore";
 import { onAuthStateChanged } from 'firebase/auth';
 import Navbar from '../components/navbar'
+import Recipes from '../components/recipe'
 
 export default function Inventory() {
   const [inventory, setInventory] = useState([]);
@@ -144,10 +145,11 @@ export default function Inventory() {
       <Box border="1px solid #333" height="750px">
         <Box 
           width= "800px" 
-          height="100px" 
+          height="80px" 
           bgcolor="#ADD8E6" 
           display="flex" 
           alignItems="center" 
+          justifyContent="center"
           padding={2}
           sx={{ borderBottom: 1 }}
         >
@@ -222,6 +224,7 @@ export default function Inventory() {
         }
       </Stack>
       </Box>
+      <Recipes/>
     </Box>
   );
 }
